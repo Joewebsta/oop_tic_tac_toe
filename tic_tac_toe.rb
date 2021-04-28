@@ -84,6 +84,10 @@ class TTTGame
     board.set_square_at(square, human.marker)
   end
 
+  def computer_moves
+    board.set_square_at((1..9).to_a.sample, computer.marker)
+  end
+
   def play
     display_welcome_message
     loop do
@@ -91,10 +95,12 @@ class TTTGame
       human_moves
       display_board
       break
-      break if someone_won? || board_full?
+      # break if someone_won? || board_full?
 
       computer_moves
-      break if someone_won? || board_full?
+      display_board
+      # break if someone_won? || board_full?
+      break
     end
     # display_result
     display_goodbye_message
