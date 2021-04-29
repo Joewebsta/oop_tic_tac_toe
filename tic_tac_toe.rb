@@ -39,12 +39,15 @@ class Player
 end
 
 class TTTGame
+  HUMAN_MARKER = 'X'
+  COMPUTER_MARKER = 'O'
+
   attr_reader :board, :human, :computer
 
   def initialize
     @board = Board.new
-    @human = Player.new('X')
-    @computer = Player.new('O')
+    @human = Player.new(HUMAN_MARKER)
+    @computer = Player.new(COMPUTER_MARKER)
   end
 
   def display_welcome_message
@@ -94,7 +97,6 @@ class TTTGame
       display_board
       human_moves
       display_board
-      break
       # break if someone_won? || board_full?
 
       computer_moves
