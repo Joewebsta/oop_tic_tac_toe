@@ -2,12 +2,6 @@
 
 # comment
 class Board
-  # WINNING_LINES = [
-  #   [[1, 2, 3], [4, 5, 6], [7, 8, 9]] +
-  #     [[1, 4, 7], [2, 5, 8], [3, 6, 9]] +
-  #     [[1, 5, 9], [4, 5, 7]]
-  # ].freeze
-
   WINNING_LINES = [[1, 2, 3], [4, 5, 6], [7, 8, 9],
                    [1, 4, 7], [2, 5, 8], [3, 6, 9],
                    [1, 5, 9], [4, 5, 7]].freeze
@@ -37,16 +31,20 @@ class Board
     !!detect_winner
   end
 
+  def count_human_marker(squares)
+    squares.map(&:marker).count(TTTGame::HUMAN_MARKER)
+  end
+
+  def count_computer_marker(squares)
+    squares.map(&:marker).count(TTTGame::COMPUTER_MARKER)
+  end
+
   # returns winning marker or nil
   def detect_winner
     WINNING_LINES.each do |line|
-      if @squares[line[0]].marker == TTTGame::HUMAN_MARKER &&
-         @squares[line[1]].marker == TTTGame::HUMAN_MARKER &&
-         @squares[line[2]].marker == TTTGame::HUMAN_MARKER
+      if count_human_marker(@squares.values_at(*line)) == 3
         return TTTGame::HUMAN_MARKER
-      elsif @squares[line[0]].marker == TTTGame::COMPUTER_MARKER &&
-            @squares[line[1]].marker == TTTGame::COMPUTER_MARKER &&
-            @squares[line[2]].marker == TTTGame::COMPUTER_MARKER
+      elsif count_computer_marker(@squares.values_at(*line)) == 3
         return TTTGame::COMPUTER_MARKER
       end
     end
