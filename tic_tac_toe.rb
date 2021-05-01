@@ -88,9 +88,11 @@ end
 
 class Player
   attr_reader :marker
+  attr_accessor :score
 
   def initialize(marker)
     @marker = marker
+    @points = 0
   end
 end
 
@@ -98,6 +100,7 @@ class TTTGame
   HUMAN_MARKER = 'X'
   COMPUTER_MARKER = 'O'
   FIRST_TO_MOVE = HUMAN_MARKER
+  POINTS_TO_WIN = 5
 
   attr_reader :board, :human, :computer
 
@@ -106,6 +109,7 @@ class TTTGame
     @human = Player.new(HUMAN_MARKER)
     @computer = Player.new(COMPUTER_MARKER)
     @current_marker = FIRST_TO_MOVE
+    @round = 1
   end
 
   def play
@@ -119,10 +123,14 @@ class TTTGame
 
   def main_game
     loop do
+      display_round
+      display_player_markers
       display_board
       player_move
       display_result
       break unless play_again?
+
+      update_round
 
       reset
       display_play_again_message
@@ -134,7 +142,7 @@ class TTTGame
       current_player_moves
       break if board.someone_won? || board.full?
 
-      clear_screen_and_display_board if human_turn?
+      clear_screen_and_display_ui if human_turn?
     end
   end
 
@@ -147,8 +155,10 @@ class TTTGame
     puts 'Thanks for playing Tic Tac Toe! Goodbye!'
   end
 
-  def clear_screen_and_display_board
+  def clear_screen_and_display_ui
     clear
+    display_round
+    display_player_markers
     display_board
   end
 
@@ -156,11 +166,18 @@ class TTTGame
     @current_marker == HUMAN_MARKER
   end
 
-  def display_board
+  def display_player_markers
     puts "You're a #{human.marker}. Computer is a #{computer.marker}."
-    puts ''
+  end
+
+  def display_round
+    puts "Round #{@round}"
+  end
+
+  def display_board
+    puts
     board.draw
-    puts ''
+    puts
   end
 
   def joinor(keys)
@@ -201,7 +218,7 @@ class TTTGame
   end
 
   def display_result
-    clear_screen_and_display_board
+    clear_screen_and_display_ui
 
     case board.winning_marker
     when human.marker
@@ -211,6 +228,10 @@ class TTTGame
     else
       puts "It's a tie!"
     end
+  end
+
+  def update_round
+    @round += 1
   end
 
   def play_again?
