@@ -163,8 +163,18 @@ class TTTGame
     puts ''
   end
 
+  def joinor(keys)
+    case keys.size
+    when 1 then keys.first
+    when 2 then keys.join(' or ')
+    else
+      keys = keys.join(', ')
+      keys[0..-2] + 'or ' + keys[-1]
+    end
+  end
+
   def human_moves
-    puts "Choose a square (#{board.unmarked_keys.join(', ')}): "
+    puts "Choose a square (#{joinor(board.unmarked_keys)}): "
     square = nil
     loop do
       square = gets.chomp.to_i
