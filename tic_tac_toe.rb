@@ -52,11 +52,27 @@ class Board
     puts '     |     |'
   end
 
-  def at_risk_square?
-    # For each array in WINNING_LINES
-    # Check the corresponding squares on the board
-    # If there are two squares that contain the human marker
+  def winning_square?
+    WINNING_LINES.any? do |line|
+      squares = @squares.values_at(*line)
+      markers = squares.map(&:marker)
+      markers.count('O') == 2 && markers.count(' ') == 1
+    end
+  end
 
+  def winning_square_key
+    WINNING_LINES.each do |line|
+      squares = @squares.values_at(*line)
+      markers = squares.map(&:marker)
+
+      next unless markers.count('O') == 2 && markers.count(' ') == 1
+
+      winning = squares.select { |square| square.marker == ' ' }.first
+      return @squares.key(winning)
+    end
+  end
+
+  def at_risk_square?
     WINNING_LINES.any? do |line|
       squares = @squares.values_at(*line)
       markers = squares.map(&:marker)
@@ -289,7 +305,9 @@ class TTTGame
   end
 
   def computer_moves
-    if board.at_risk_square?
+    if board.winning_square?
+      board[board.winning_square_key] = computer.marker
+    elsif board.at_risk_square?
       board[board.threatened_square_key] = computer.marker
     else
       board[board.unmarked_keys.sample] = computer.marker
