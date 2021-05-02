@@ -52,43 +52,23 @@ class Board
     puts '     |     |'
   end
 
-  def winning_square?
+  def two_consecutive?(marker)
     WINNING_LINES.any? do |line|
       squares = @squares.values_at(*line)
       markers = squares.map(&:marker)
-      markers.count('O') == 2 && markers.count(' ') == 1
+      markers.count(marker) == 2 && squares.one?(&:unmarked?)
     end
   end
 
-  def winning_square_key
+  def third_square_key(marker)
     WINNING_LINES.each do |line|
       squares = @squares.values_at(*line)
       markers = squares.map(&:marker)
 
-      next unless markers.count('O') == 2 && markers.count(' ') == 1
+      next unless markers.count(marker) == 2 && squares.one?(&:unmarked?)
 
-      winning = squares.select { |square| square.marker == ' ' }.first
-      return @squares.key(winning)
-    end
-  end
-
-  def at_risk_square?
-    WINNING_LINES.any? do |line|
-      squares = @squares.values_at(*line)
-      markers = squares.map(&:marker)
-      markers.count('X') == 2 && markers.count(' ') == 1
-    end
-  end
-
-  def threatened_square_key
-    WINNING_LINES.each do |line|
-      squares = @squares.values_at(*line)
-      markers = squares.map(&:marker)
-
-      next unless markers.count('X') == 2 && markers.count(' ') == 1
-
-      threatened_square = squares.select { |square| square.marker == ' ' }.first
-      return @squares.key(threatened_square)
+      third_square = squares.select(&:unmarked?).first
+      return @squares.key(third_square)
     end
   end
 
@@ -271,11 +251,11 @@ class TTTGame
   end
 
   def display_score
+    puts
     puts "Your score: #{human.score}. Computer score: #{computer.score}"
   end
 
   def display_board
-    puts
     board.draw
     puts
   end
@@ -305,10 +285,10 @@ class TTTGame
   end
 
   def computer_moves
-    if board.winning_square?
-      board[board.winning_square_key] = computer.marker
-    elsif board.at_risk_square?
-      board[board.threatened_square_key] = computer.marker
+    if board.two_consecutive?(computer.marker)
+      board[board.third_square_key(computer.marker)] = computer.marker
+    elsif board.two_consecutive?(human.marker)
+      board[board.third_square_key(human.marker)] = computer.marker
     else
       board[board.unmarked_keys.sample] = computer.marker
     end
