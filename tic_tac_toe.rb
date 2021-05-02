@@ -92,7 +92,7 @@ class Player
 
   def initialize(marker)
     @marker = marker
-    @points = 0
+    @score = 0
   end
 end
 
@@ -124,8 +124,9 @@ class TTTGame
   def main_game
     loop do
       display_round
-      display_player_markers
+      display_score
       display_board
+      display_player_markers
       player_move
       display_result
       break unless play_again?
@@ -133,7 +134,6 @@ class TTTGame
       update_round
 
       reset
-      display_play_again_message
     end
   end
 
@@ -158,8 +158,9 @@ class TTTGame
   def clear_screen_and_display_ui
     clear
     display_round
-    display_player_markers
+    display_score
     display_board
+    display_player_markers
   end
 
   def human_turn?
@@ -167,11 +168,17 @@ class TTTGame
   end
 
   def display_player_markers
-    puts "You're a #{human.marker}. Computer is a #{computer.marker}."
+    puts "Your marker: \"#{human.marker}\". Computer marker: \"#{computer.marker}\"."
+    puts
   end
 
   def display_round
-    puts "Round #{@round}"
+    puts "************ Round #{@round} ************"
+    puts
+  end
+
+  def display_score
+    puts "Your score: #{human.score}. Computer score: #{computer.score}"
   end
 
   def display_board
@@ -237,6 +244,7 @@ class TTTGame
   def play_again?
     answer = nil
     loop do
+      puts
       puts 'Would you like to play again? (y/n)'
       answer = gets.chomp.downcase
       break if %w[y n].include? answer
@@ -255,11 +263,6 @@ class TTTGame
     board.reset
     @current_marker = FIRST_TO_MOVE
     clear
-  end
-
-  def display_play_again_message
-    puts "Let's play again!"
-    puts ''
   end
 end
 
