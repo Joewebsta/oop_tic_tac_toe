@@ -38,7 +38,6 @@ class Board
     (1..9).each { |key| @squares[key] = Square.new }
   end
 
-  # rubocop:disable Metrics/AbcSize
   def draw
     puts '     |     |'
     puts "  #{@squares[1]}  |  #{@squares[2]}  |  #{@squares[3]}"
@@ -52,12 +51,35 @@ class Board
     puts "  #{@squares[7]}  |  #{@squares[8]}  |  #{@squares[9]}"
     puts '     |     |'
   end
-  # rubocop:enable Metrics/AbcSize
+
+  def at_risk_square?
+    # For each array in WINNING_LINES
+    # Check the corresponding squares on the board
+    # If there are two squares that contain the human marker
+
+    WINNING_LINES.any? do |line|
+      squares = @squares.values_at(*line)
+      markers = squares.map(&:marker)
+      markers.count('X') == 2 && markers.count(' ') == 1
+    end
+  end
+
+  def threatened_square_key
+    WINNING_LINES.each do |line|
+      squares = @squares.values_at(*line)
+      markers = squares.map(&:marker)
+
+      next unless markers.count('X') == 2 && markers.count(' ') == 1
+
+      threatened_square = squares.select { |square| square.marker == ' ' }.first
+      return @squares.key(threatened_square)
+    end
+  end
 
   private
 
   def three_identical_markers?(squares)
-    markers = squares.select(&:marked?).collect(&:marker)
+    markers = squares.select(&:marked?).map(&:marker)
     return false if markers.size != 3
 
     markers.min == markers.max
@@ -135,6 +157,19 @@ class TTTGame
     end
   end
 
+  def play_rounds
+    loop do
+      display_ui
+      player_move
+      display_round_result
+      break if game_winner?
+
+      next_round_prompt
+      update_round_num
+      reset_round
+    end
+  end
+
   def display_game_result
     if human.score == WINNING_SCORE
       puts '******************************************'
@@ -152,19 +187,6 @@ class TTTGame
     @round = 1
     human.reset_score
     computer.reset_score
-  end
-
-  def play_rounds
-    loop do
-      display_ui
-      player_move
-      display_round_result
-      break if game_winner?
-
-      next_round_prompt
-      update_round_num
-      reset_round
-    end
   end
 
   def game_winner?
@@ -267,7 +289,11 @@ class TTTGame
   end
 
   def computer_moves
-    board[board.unmarked_keys.sample] = computer.marker
+    if board.at_risk_square?
+      board[board.threatened_square_key] = computer.marker
+    else
+      board[board.unmarked_keys.sample] = computer.marker
+    end
   end
 
   def current_player_moves
