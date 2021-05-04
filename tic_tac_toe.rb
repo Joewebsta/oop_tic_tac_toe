@@ -119,8 +119,8 @@ end
 class TTTGame
   HUMAN_MARKER = 'X'
   COMPUTER_MARKER = 'O'
-  FIRST_TO_MOVE = HUMAN_MARKER
-  WINNING_SCORE = 3
+  # FIRST_TO_MOVE = HUMAN_MARKER
+  WINNING_SCORE = 2
 
   attr_reader :board, :human, :computer
 
@@ -128,7 +128,9 @@ class TTTGame
     @board = Board.new
     @human = Player.new(HUMAN_MARKER)
     @computer = Player.new(COMPUTER_MARKER)
-    @current_marker = FIRST_TO_MOVE
+    # @current_marker = FIRST_TO_MOVE
+    @first_to_move = nil
+    @current_marker = nil
     @round = 1
   end
 
@@ -141,8 +143,39 @@ class TTTGame
 
   private
 
+  def determine_first_to_move
+    @first_to_move = case first_to_move_selection
+                     when 1 then HUMAN_MARKER
+                     when 2 then COMPUTER_MARKER
+                     when 3 then [HUMAN_MARKER, COMPUTER_MARKER].sample
+                     end
+
+    @current_marker = @first_to_move
+  end
+
+  def first_to_move_selection
+    puts
+    puts 'Who would you like to go first? Press:'
+
+    answer = nil
+    loop do
+      puts '1) You'
+      puts '2) The computer'
+      puts '3) Choose randomly'
+      answer = gets.chomp.to_i
+      break if answer.between?(1, 3)
+
+      puts
+      puts 'Sorry that is not a valid choice. Please try again.'
+    end
+
+    clear
+    answer
+  end
+
   def main_game
     loop do
+      determine_first_to_move
       play_rounds
       display_game_result
       break unless play_again?
@@ -213,7 +246,7 @@ class TTTGame
     puts 'Welcome to Tic Tac Toe!'
     puts
     puts "The first to score #{WINNING_SCORE} points wins the game."
-    puts
+    puts '------------------------------------------'
   end
 
   def display_goodbye_message
@@ -347,7 +380,8 @@ class TTTGame
 
   def reset_round
     board.reset
-    @current_marker = FIRST_TO_MOVE
+    @current_marker = @first_to_move
+    # @current_marker = FIRST_TO_MOVE
     clear
   end
 end
