@@ -52,15 +52,7 @@ class Board
     puts '     |     |'
   end
 
-  def two_consecutive?(marker)
-    WINNING_LINES.any? do |line|
-      squares = @squares.values_at(*line)
-      markers = squares.map(&:marker)
-      markers.count(marker) == 2 && squares.one?(&:unmarked?)
-    end
-  end
-
-  def third_square_key(marker)
+  def find_at_risk_square(marker)
     WINNING_LINES.each do |line|
       squares = @squares.values_at(*line)
       markers = squares.map(&:marker)
@@ -70,6 +62,8 @@ class Board
       third_square = squares.select(&:unmarked?).first
       return @squares.key(third_square)
     end
+
+    nil
   end
 
   private
@@ -156,7 +150,7 @@ class TTTGame
   def play_rounds
     loop do
       display_ui
-      player_move
+      player_moves
       display_round_result
       break if game_winner?
 
@@ -196,7 +190,7 @@ class TTTGame
     gets.chomp
   end
 
-  def player_move
+  def player_moves
     loop do
       current_player_moves
 
@@ -251,8 +245,8 @@ class TTTGame
   end
 
   def display_score
-    puts
     puts "Your score: #{human.score}. Computer score: #{computer.score}"
+    puts
   end
 
   def display_board
@@ -285,13 +279,10 @@ class TTTGame
   end
 
   def computer_moves
-    if board.two_consecutive?(computer.marker)
-      board[board.third_square_key(computer.marker)] = computer.marker
-    elsif board.two_consecutive?(human.marker)
-      board[board.third_square_key(human.marker)] = computer.marker
-    else
-      board[board.unmarked_keys.sample] = computer.marker
-    end
+    square ||= board.find_at_risk_square(computer.marker)
+    square ||= board.find_at_risk_square(human.marker)
+    square ||= board.unmarked_keys.sample
+    board[square] = computer.marker
   end
 
   def current_player_moves
