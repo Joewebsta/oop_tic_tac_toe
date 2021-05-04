@@ -18,6 +18,10 @@ class Board
     @squares.keys.select { |key| @squares[key].unmarked? }
   end
 
+  def unmarked_square_5?
+    @squares[5].unmarked?
+  end
+
   def full?
     unmarked_keys.empty?
   end
@@ -281,6 +285,7 @@ class TTTGame
   def computer_moves
     square ||= board.find_at_risk_square(computer.marker)
     square ||= board.find_at_risk_square(human.marker)
+    square ||= 5 if board.unmarked_square_5?
     square ||= board.unmarked_keys.sample
     board[square] = computer.marker
   end
