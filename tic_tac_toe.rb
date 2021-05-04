@@ -103,10 +103,9 @@ class Square
 end
 
 class Player
-  attr_reader :marker
-  attr_accessor :score
+  attr_accessor :score, :marker
 
-  def initialize(marker)
+  def initialize(marker = nil)
     @marker = marker
     @score = 0
   end
@@ -117,18 +116,15 @@ class Player
 end
 
 class TTTGame
-  HUMAN_MARKER = 'X'
   COMPUTER_MARKER = 'O'
-  # FIRST_TO_MOVE = HUMAN_MARKER
   WINNING_SCORE = 2
 
   attr_reader :board, :human, :computer
 
   def initialize
     @board = Board.new
-    @human = Player.new(HUMAN_MARKER)
+    @human = Player.new
     @computer = Player.new(COMPUTER_MARKER)
-    # @current_marker = FIRST_TO_MOVE
     @first_to_move = nil
     @current_marker = nil
     @round = 1
@@ -145,23 +141,27 @@ class TTTGame
 
   def determine_first_to_move
     @first_to_move = case first_to_move_selection
-                     when 1 then HUMAN_MARKER
+                     when 1 then human.marker
                      when 2 then COMPUTER_MARKER
-                     when 3 then [HUMAN_MARKER, COMPUTER_MARKER].sample
+                     when 3 then [human.marker, COMPUTER_MARKER].sample
                      end
 
     @current_marker = @first_to_move
   end
 
   def first_to_move_selection
+    puts '**** Player Order ****'
     puts
-    puts 'Who would you like to go first? Press:'
+    puts 'Who would you like to go first? Select:'
+    answer = first_to_move_answer
+    clear
+    answer
+  end
 
+  def first_to_move_answer
     answer = nil
     loop do
-      puts '1) You'
-      puts '2) The computer'
-      puts '3) Choose randomly'
+      puts "1) You \n2) The computer \n3) Choose randomly"
       answer = gets.chomp.to_i
       break if answer.between?(1, 3)
 
@@ -169,12 +169,44 @@ class TTTGame
       puts 'Sorry that is not a valid choice. Please try again.'
     end
 
-    clear
     answer
+  end
+
+  def pick_marker_intro
+    puts '**** Select your marker ****'
+    puts
+    puts "For example: 'X', '!', or 'a'."
+  end
+
+  def pick_marker
+    pick_marker_intro
+    @human.marker = select_marker
+    clear
+  end
+
+  def select_marker
+    answer = nil
+    loop do
+      answer = gets.chomp
+      break if answer.length == 1 && answer.downcase != 'o' && answer.squeeze != ' '
+
+      invalid_marker_msg(answer)
+    end
+
+    answer
+  end
+
+  def invalid_marker_msg(answer)
+    puts
+    puts 'Sorry that is not a valid choice. Please try again.'
+    puts "- Note: The computer's marker is O." if answer.downcase == 'o'
+    puts '- Note: Your marker must be a single character.' if answer.length != 1
+    puts '- Note: Your marker must not be a space.' if answer.squeeze == ' '
   end
 
   def main_game
     loop do
+      pick_marker
       determine_first_to_move
       play_rounds
       display_game_result
@@ -243,10 +275,11 @@ class TTTGame
   end
 
   def display_welcome_message
-    puts 'Welcome to Tic Tac Toe!'
+    puts '********* Welcome to Tic Tac Toe! *********'
     puts
     puts "The first to score #{WINNING_SCORE} points wins the game."
     puts '------------------------------------------'
+    puts
   end
 
   def display_goodbye_message
@@ -268,7 +301,7 @@ class TTTGame
   end
 
   def human_turn?
-    @current_marker == HUMAN_MARKER
+    @current_marker == human.marker
   end
 
   def display_player_markers
@@ -329,7 +362,7 @@ class TTTGame
       @current_marker = COMPUTER_MARKER
     else
       computer_moves
-      @current_marker = HUMAN_MARKER
+      @current_marker = human.marker
     end
   end
 
