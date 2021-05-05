@@ -42,6 +42,8 @@ class Board
     (1..9).each { |key| @squares[key] = Square.new }
   end
 
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/MethodLength
   def draw
     puts '     |     |'
     puts "  #{@squares[1]}  |  #{@squares[2]}  |  #{@squares[3]}"
@@ -55,6 +57,8 @@ class Board
     puts "  #{@squares[7]}  |  #{@squares[8]}  |  #{@squares[9]}"
     puts '     |     |'
   end
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/MethodLength
 
   def find_at_risk_square(marker)
     WINNING_LINES.each do |line|
@@ -103,9 +107,10 @@ class Square
 end
 
 class Player
-  attr_accessor :score, :marker
+  attr_accessor :score, :marker, :name
 
-  def initialize(marker = nil)
+  def initialize(name = nil, marker = nil)
+    @name = name
     @marker = marker
     @score = 0
   end
@@ -117,6 +122,7 @@ end
 
 class TTTGame
   COMPUTER_MARKER = 'O'
+  COMPUTER_NAMES = %w[BumbleBee C3P0 Robocop Wall-E].freeze
   WINNING_SCORE = 2
 
   attr_reader :board, :human, :computer
@@ -124,7 +130,7 @@ class TTTGame
   def initialize
     @board = Board.new
     @human = Player.new
-    @computer = Player.new(COMPUTER_MARKER)
+    @computer = Player.new(COMPUTER_NAMES.sample, COMPUTER_MARKER)
     @first_to_move = nil
     @current_marker = nil
     @round = 1
@@ -153,6 +159,7 @@ class TTTGame
     puts '**** Player Order ****'
     puts
     puts 'Who would you like to go first? Select:'
+    puts
     answer = first_to_move_answer
     clear
     answer
@@ -173,9 +180,9 @@ class TTTGame
   end
 
   def pick_marker_intro
-    puts '**** Select your marker ****'
+    puts '**** Marker Selection ****'
     puts
-    puts "For example: 'X', '!', or 'a'."
+    puts "Select your marker (e.g. 'X', '$', or 'a')."
   end
 
   def pick_marker
@@ -204,8 +211,32 @@ class TTTGame
     puts '- Note: Your marker must not be a space.' if answer.squeeze == ' '
   end
 
+  def set_name
+    set_name_prompt
+    human.name = select_name
+    clear
+  end
+
+  def set_name_prompt
+    puts '**** Player Name ****'
+    puts
+    puts 'What is your name?'
+  end
+
+  def select_name
+    answer = nil
+    loop do
+      answer = gets.chomp
+      break if answer.length >= 1 && answer.squeeze != ' '
+
+      puts 'Your answer must not be blank. Please try again.'
+    end
+    answer
+  end
+
   def main_game
     loop do
+      set_name
       pick_marker
       determine_first_to_move
       play_rounds
@@ -232,11 +263,11 @@ class TTTGame
   def display_game_result
     if human.score == WINNING_SCORE
       puts '******************************************'
-      puts "You scored #{WINNING_SCORE} points and have won the game!"
+      puts "#{human.name} scored #{WINNING_SCORE} points and has won the game!"
       puts '******************************************'
     else
       puts '**************************************************'
-      puts "The computer scored #{WINNING_SCORE} points and has won the game!"
+      puts "#{computer.name} scored #{WINNING_SCORE} points and has won the game!"
       puts '**************************************************'
     end
   end
@@ -305,7 +336,7 @@ class TTTGame
   end
 
   def display_player_markers
-    puts "Your marker: \"#{human.marker}\". Computer marker: \"#{computer.marker}\"."
+    puts "#{human.name}'s marker: #{human.marker} -- #{computer.name}'s marker: #{computer.marker}"
     puts
   end
 
@@ -315,7 +346,7 @@ class TTTGame
   end
 
   def display_score
-    puts "Your score: #{human.score}. Computer score: #{computer.score}"
+    puts "#{human.name}'s score: #{human.score}. #{computer.name}'s score: #{computer.score}"
     puts
   end
 
@@ -336,24 +367,31 @@ class TTTGame
 
   def human_moves
     puts "Choose a square (#{joinor(board.unmarked_keys)}): "
+    square = choose_square_key
+    board[square] = human.marker
+  end
+
+  def choose_square_key
     square = nil
     loop do
       square = gets.chomp.to_i
       break if board.unmarked_keys.include?(square)
 
-      puts
       puts "Sorry, that's not a valid choice."
     end
-
-    board[square] = human.marker
+    square
   end
 
   def computer_moves
-    square ||= board.find_at_risk_square(computer.marker)
-    square ||= board.find_at_risk_square(human.marker)
+    square ||= at_risk_square
     square ||= 5 if board.unmarked_square_5?
     square ||= board.unmarked_keys.sample
     board[square] = computer.marker
+  end
+
+  def at_risk_square
+    board.find_at_risk_square(computer.marker) ||
+      board.find_at_risk_square(human.marker)
   end
 
   def current_player_moves
@@ -368,14 +406,17 @@ class TTTGame
 
   def display_round_result
     clear_screen_and_display_ui
-
     return if game_winner?
 
+    display_round_result_message
+  end
+
+  def display_round_result_message
     case board.winning_marker
     when human.marker
-      puts '### You won the round! ###'
+      puts "### #{human.name} won the round! ###"
     when computer.marker
-      puts '### Computer won the round! ###'
+      puts "### #{computer.name} won the round! ###"
     else
       puts "It's a tie!"
     end
@@ -401,7 +442,7 @@ class TTTGame
       answer = gets.chomp.downcase
       break if %w[y n].include? answer
 
-      puts 'Sorry, must be y or n'
+      puts 'Sorry, must be y or n.'
     end
 
     answer == 'y'
