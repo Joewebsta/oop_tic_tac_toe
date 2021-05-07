@@ -42,8 +42,6 @@ class Board
     (1..9).each { |key| @squares[key] = Square.new }
   end
 
-  # rubocop:disable Metrics/AbcSize
-  # rubocop:disable Metrics/MethodLength
   def draw
     puts '     |     |'
     puts "  #{@squares[1]}  |  #{@squares[2]}  |  #{@squares[3]}"
@@ -57,8 +55,6 @@ class Board
     puts "  #{@squares[7]}  |  #{@squares[8]}  |  #{@squares[9]}"
     puts '     |     |'
   end
-  # rubocop:enable Metrics/AbcSize
-  # rubocop:enable Metrics/MethodLength
 
   def find_at_risk_square(marker)
     WINNING_LINES.each do |line|
@@ -122,7 +118,7 @@ end
 
 class TTTGame
   COMPUTER_MARKER = 'O'
-  COMPUTER_NAMES = %w[BumbleBee C3P0 Robocop Wall-E].freeze
+  COMPUTER_NAMES = %w(BumbleBee C3P0 Robocop Wall-E).freeze
   COMPUTER_PRIORITY_SQUARE = 5
   WINNING_SCORE = 5
 
@@ -200,13 +196,16 @@ class TTTGame
     puts '**** Marker Selection ****'
     puts
     puts "Select your marker (e.g. 'X', '$', or 'a')."
+    puts "- Note: The compter's marker is 'O'."
   end
 
   def select_marker
     answer = nil
     loop do
       answer = gets.chomp
-      break if answer.length == 1 && answer.downcase != 'o' && answer.squeeze != ' '
+      break if answer.length == 1 &&
+               answer.downcase != 'o' &&
+               answer.squeeze != ' '
 
       invalid_marker_msg(answer)
     end
@@ -251,9 +250,10 @@ class TTTGame
 
       puts
       puts 'Sorry that is not a valid choice. Please try again.'
+      puts
     end
 
-    answer
+    answer.to_i
   end
 
   def play_rounds
@@ -287,7 +287,8 @@ class TTTGame
   end
 
   def display_score
-    puts "#{human.name}'s score: #{human.score}. #{computer.name}'s score: #{computer.score}"
+    puts "#{human.name}'s score: #{human.score}. " \
+         "#{computer.name}'s score: #{computer.score}"
     puts
   end
 
@@ -297,7 +298,8 @@ class TTTGame
   end
 
   def display_player_markers
-    puts "#{human.name}'s marker: #{human.marker} -- #{computer.name}'s marker: #{computer.marker}"
+    puts "#{human.name}'s marker: #{human.marker} -- " \
+         "#{computer.name}'s marker: #{computer.marker}"
     puts
   end
 
@@ -339,13 +341,14 @@ class TTTGame
   def choose_square_key
     square = nil
     loop do
-      square = gets.chomp.to_i
-      break if board.unmarked_keys.include?(square)
-
+      square = gets.chomp
+      break if board.unmarked_keys.include?(square.to_i) &&
+               square.length == 1
       puts
       puts "Sorry, that's not a valid choice."
     end
-    square
+
+    square.to_i
   end
 
   def computer_moves
@@ -440,7 +443,7 @@ class TTTGame
       puts '-----------------------------------'
       puts 'Would you like to play again? (y/n)'
       answer = gets.chomp.downcase
-      break if %w[y n].include? answer
+      break if %w(y n).include? answer
 
       puts 'Sorry, must be y or n.'
     end
