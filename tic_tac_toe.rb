@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Board
+  SIZE = 3
   WINNING_LINES = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] + # rows
                   [[1, 4, 7], [2, 5, 8], [3, 6, 9]] + # cols
                   [[1, 5, 9], [3, 5, 7]]              # diagonals
@@ -33,7 +34,7 @@ class Board
   def winning_marker
     WINNING_LINES.each do |line|
       squares = @squares.values_at(*line)
-      return squares.first.marker if three_identical_markers?(squares)
+      return squares.first.marker if full_row_identical_markers?(squares)
     end
     nil
   end
@@ -61,7 +62,8 @@ class Board
       squares = @squares.values_at(*line)
       markers = squares.map(&:marker)
 
-      next unless markers.count(marker) == 2 && squares.one?(&:unmarked?)
+      next unless markers.count(marker) == (SIZE - 1) &&
+                  squares.one?(&:unmarked?)
 
       third_square = squares.select(&:unmarked?).first
       return @squares.key(third_square)
@@ -72,9 +74,9 @@ class Board
 
   private
 
-  def three_identical_markers?(squares)
+  def full_row_identical_markers?(squares)
     markers = squares.select(&:marked?).map(&:marker)
-    return false if markers.size != 3
+    return false if markers.size != SIZE
 
     markers.min == markers.max
   end
@@ -103,11 +105,9 @@ class Square
 end
 
 class Player
-  attr_accessor :score, :marker, :name
+  attr_accessor :score
 
-  def initialize(name = nil, marker = nil)
-    @name = name
-    @marker = marker
+  def initialize
     @score = 0
   end
 
@@ -116,18 +116,100 @@ class Player
   end
 end
 
+class Human < Player
+  attr_accessor :name, :marker
+
+  def set_name
+    set_name_prompt
+    self.name = select_name
+    clear
+  end
+
+  def set_marker
+    set_marker_prompt
+    self.marker = select_marker
+    clear
+  end
+
+  private
+
+  def set_name_prompt
+    puts '**** Name Selection ****'
+    puts
+    puts 'What is your name?'
+  end
+
+  def select_name
+    answer = nil
+    loop do
+      answer = gets.chomp
+      break if answer.length >= 1 && answer.squeeze != ' '
+
+      puts 'Your answer must not be blank. Please try again.'
+    end
+    answer
+  end
+
+  def set_marker_prompt
+    puts '**** Marker Selection ****'
+    puts
+    puts "Select your marker (e.g. 'X', '$', or 'a')."
+    puts "- Note: The compter's marker is 'O'."
+  end
+
+  def select_marker
+    answer = nil
+    loop do
+      answer = gets.chomp
+      break if answer.length == 1 &&
+               answer.downcase != 'o' &&
+               answer.squeeze != ' '
+
+      invalid_marker_msg(answer)
+    end
+
+    answer
+  end
+
+  def invalid_marker_msg(answer)
+    puts
+    puts 'Sorry that is not a valid choice. Please try again.'
+    puts '- Note: Your marker must be a single character.' if answer.length != 1
+    puts '- Note: Your marker must not be a space.' if answer.squeeze == ' '
+
+    if answer.downcase == Computer::MARKER.downcase
+      puts "- Note: The computer's marker is #{Computer::MARKER}."
+    end
+  end
+
+  def clear
+    system 'clear'
+  end
+end
+
+class Computer < Player
+  MARKER = 'O'
+  NAMES = %w(BumbleBee C3P0 Robocop Wall-E).freeze
+  PRIORITY_SQUARE = 5
+
+  attr_reader :name, :marker
+
+  def initialize
+    @name = NAMES.sample
+    @marker = MARKER
+    super
+  end
+end
+
 class TTTGame
-  COMPUTER_MARKER = 'O'
-  COMPUTER_NAMES = %w(BumbleBee C3P0 Robocop Wall-E).freeze
-  COMPUTER_PRIORITY_SQUARE = 5
   WINNING_SCORE = 5
 
   attr_reader :board, :human, :computer
 
   def initialize
     @board = Board.new
-    @human = Player.new
-    @computer = Player.new(COMPUTER_NAMES.sample, COMPUTER_MARKER)
+    @human = Human.new
+    @computer = Computer.new
     @first_to_move = nil
     @current_marker = nil
     @round = 1
@@ -152,8 +234,7 @@ class TTTGame
 
   def main_game
     loop do
-      set_name
-      set_marker
+      set_name_and_marker
       determine_first_to_move
       play_rounds
       display_game_result
@@ -163,69 +244,16 @@ class TTTGame
     end
   end
 
-  def set_name
-    set_name_prompt
-    human.name = select_name
-    clear
-  end
-
-  def set_name_prompt
-    puts '**** Name Selection ****'
-    puts
-    puts 'What is your name?'
-  end
-
-  def select_name
-    answer = nil
-    loop do
-      answer = gets.chomp
-      break if answer.length >= 1 && answer.squeeze != ' '
-
-      puts 'Your answer must not be blank. Please try again.'
-    end
-    answer
-  end
-
-  def set_marker
-    pick_marker_intro
-    @human.marker = select_marker
-    clear
-  end
-
-  def pick_marker_intro
-    puts '**** Marker Selection ****'
-    puts
-    puts "Select your marker (e.g. 'X', '$', or 'a')."
-    puts "- Note: The compter's marker is 'O'."
-  end
-
-  def select_marker
-    answer = nil
-    loop do
-      answer = gets.chomp
-      break if answer.length == 1 &&
-               answer.downcase != 'o' &&
-               answer.squeeze != ' '
-
-      invalid_marker_msg(answer)
-    end
-
-    answer
-  end
-
-  def invalid_marker_msg(answer)
-    puts
-    puts 'Sorry that is not a valid choice. Please try again.'
-    puts "- Note: The computer's marker is O." if answer.downcase == 'o'
-    puts '- Note: Your marker must be a single character.' if answer.length != 1
-    puts '- Note: Your marker must not be a space.' if answer.squeeze == ' '
+  def set_name_and_marker
+    human.set_name
+    human.set_marker
   end
 
   def determine_first_to_move
     @first_to_move = case first_to_move_selection
                      when 1 then human.marker
-                     when 2 then COMPUTER_MARKER
-                     when 3 then [human.marker, COMPUTER_MARKER].sample
+                     when 2 then computer.marker
+                     when 3 then [human.marker, computer.marker].sample
                      end
 
     @current_marker = @first_to_move
@@ -321,7 +349,7 @@ class TTTGame
   def current_player_moves
     if human_turn?
       human_moves
-      @current_marker = COMPUTER_MARKER
+      @current_marker = computer.marker
     else
       computer_moves
       @current_marker = human.marker
@@ -364,7 +392,7 @@ class TTTGame
   end
 
   def unmarked_priority_square
-    COMPUTER_PRIORITY_SQUARE if board.unmarked_priority_square?
+    Computer::PRIORITY_SQUARE if board.unmarked_priority_square?
   end
 
   def random_unmarked_key
