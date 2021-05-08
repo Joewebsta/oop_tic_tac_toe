@@ -106,6 +106,7 @@ end
 
 class Player
   attr_accessor :score
+  attr_reader :name, :marker
 
   def initialize
     @score = 0
@@ -117,21 +118,22 @@ class Player
 end
 
 class Human < Player
-  attr_accessor :name, :marker
+  attr_writer :name, :marker
 
-  def set_name
-    set_name_prompt
-    self.name = select_name
-    clear
-  end
-
-  def set_marker
-    set_marker_prompt
-    self.marker = select_marker
-    clear
+  def initialize
+    @name = set_name
+    @marker = set_marker
+    super
   end
 
   private
+
+  def set_name
+    set_name_prompt
+    name = select_name
+    clear
+    name
+  end
 
   def set_name_prompt
     puts '**** Name Selection ****'
@@ -148,6 +150,13 @@ class Human < Player
       puts 'Your answer must not be blank. Please try again.'
     end
     answer
+  end
+
+  def set_marker
+    set_marker_prompt
+    marker = select_marker
+    clear
+    marker
   end
 
   def set_marker_prompt
@@ -174,12 +183,9 @@ class Human < Player
   def invalid_marker_msg(answer)
     puts
     puts 'Sorry that is not a valid choice. Please try again.'
+    puts "- Note: The computer's marker is #{Computer::MARKER}." if answer.downcase == Computer::MARKER.downcase
     puts '- Note: Your marker must be a single character.' if answer.length != 1
     puts '- Note: Your marker must not be a space.' if answer.squeeze == ' '
-
-    if answer.downcase == Computer::MARKER.downcase
-      puts "- Note: The computer's marker is #{Computer::MARKER}."
-    end
   end
 
   def clear
@@ -191,8 +197,6 @@ class Computer < Player
   MARKER = 'O'
   NAMES = %w(BumbleBee C3P0 Robocop Wall-E).freeze
   PRIORITY_SQUARE = 5
-
-  attr_reader :name, :marker
 
   def initialize
     @name = NAMES.sample
@@ -207,6 +211,7 @@ class TTTGame
   attr_reader :board, :human, :computer
 
   def initialize
+    display_welcome_message
     @board = Board.new
     @human = Human.new
     @computer = Computer.new
@@ -216,8 +221,6 @@ class TTTGame
   end
 
   def play
-    clear
-    display_welcome_message
     main_game
     display_goodbye_message
   end
@@ -225,6 +228,7 @@ class TTTGame
   private
 
   def display_welcome_message
+    clear
     puts '********* Welcome to Tic Tac Toe! *********'
     puts
     puts "The first to score #{WINNING_SCORE} points wins the game."
@@ -234,7 +238,6 @@ class TTTGame
 
   def main_game
     loop do
-      set_name_and_marker
       determine_first_to_move
       play_rounds
       display_game_result
@@ -242,11 +245,6 @@ class TTTGame
 
       reset_game
     end
-  end
-
-  def set_name_and_marker
-    human.set_name
-    human.set_marker
   end
 
   def determine_first_to_move
@@ -452,7 +450,8 @@ class TTTGame
       puts '******************************************'
     else
       puts '**************************************************'
-      puts "#{computer.name} scored #{WINNING_SCORE} points and has won the game!"
+      puts "#{computer.name} scored #{WINNING_SCORE}" \
+            " points and has won the game!"
       puts '**************************************************'
     end
   end
@@ -500,5 +499,4 @@ class TTTGame
   end
 end
 
-game = TTTGame.new
-game.play
+TTTGame.new.play
