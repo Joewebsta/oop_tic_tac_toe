@@ -118,8 +118,6 @@ class Player
 end
 
 class Human < Player
-  attr_writer :name, :marker
-
   def initialize
     @name = set_name
     @marker = set_marker
